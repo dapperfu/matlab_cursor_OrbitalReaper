@@ -5,12 +5,12 @@ Canonical design: `docs/IMPLEMENTATION_PLAN.md`.
 This file is the execution checklist for that plan. Items are marked as they land.
 
 - [x] Save this checklist and the design plan
-- [ ] Record the official prohibited-function list
-- [ ] Feasibility: key-repeat state machine, focus watchdog, drawnow loop
-- [ ] Thrust-law and integrator experiment
-- [ ] Development simulation modules
-- [ ] Rendering, HUD, and playable loop
-- [ ] Test suites for input, physics, determinism, and gameplay
-- [ ] Scripted level-1 clear and automated players
-- [ ] Self-contained submission at or under 9,000 characters (hard stop 10,000)
-- [ ] Gameplay, character-budget, and validation reports
+- [x] Record the official prohibited-function list
+- [x] Feasibility: key-repeat state machine, focus watchdog, drawnow loop
+- [x] Thrust-law and integrator experiment
+- [x] Development simulation modules
+- [x] Rendering, HUD, and playable loop
+- [x] Test suites for input, physics, determinism, and gameplay
+- [x] Scripted level-1 clear and automated players
+- [x] Self-contained submission under the 10,000-character hard stop (9,978; the 9,000 target was not met)
+- [x] Gameplay, character-budget, and validation reports
