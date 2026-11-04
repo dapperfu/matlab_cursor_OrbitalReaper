@@ -28,18 +28,25 @@ Clear each level by destroying every enemy. Health, score, and the seed carry fo
 
 SPACE is the only gameplay button.
 
-- Press edge: start thrusting and charging. The aim solution keeps updating while the key is down.
-- Hold: radial thrust changes the orbit, fuel burns, and charge grows with game time. Two seconds is not the same maneuver as half a second. The tank empties in about 2.5 seconds and thrust stops. Charge stops accumulating when the tank is empty.
-- Release edge: thrust stops and, if the hold lasted at least 0.12 seconds, exactly one projectile is fired. Holding never sprays.
-- Coast: gravity carries the orbit, and fuel refills only while SPACE is up.
+- Press edge: start thrusting and start the weapon response at zero. The aim solution keeps updating while the key is down.
+- Hold: radial thrust changes the orbit and fuel burns. The weapon response is the elapsed hold, not a key-repeat count. Two seconds is not the same maneuver as half a second. The tank empties in about 2.5 seconds and thrust stops. The response keeps rising from hold time after the tank is empty.
+- Release edge: thrust stops and exactly one projectile is fired. A short tap is a very weak shot. Holding never sprays, and there is no timer that fires every 0.12 seconds.
+- Coast: gravity carries the orbit, and fuel refills only while SPACE is up. Coasting does not fire.
 
 A press that starts the title, a level-clear screen, or a restart is consumed. The next press, after a release, is the first press that can thrust or fire. Losing the figure's key stream clears thrust and does not fire. MATLAB on Windows has no focus-lost callback, so that recovery is a watchdog: after key-repeat has been seen, 0.22 seconds of silence counts as a release; before the first repeat, the wait is 1.25 seconds so a normal key-repeat delay is not a focus loss. A long stall can trip the watchdog.
 
 ## Weapons
 
-Charge is `min(hold / 1.0 s, 1)`. Damage is `3.2 * (0.50*c + 1.85*c*(1-c))`, which peaks near a charge of 0.63 and is worse at a full charge. Muzzle speed is `0.40 + 3.60*c`. The shot's velocity is the ship's velocity plus that speed along the aim direction.
+Hold duration `t` is monotonic game time. With `tau = 1.0` s and `damageMax = 6`:
 
-Aim is a radial cone, not a homing missile. While SPACE is held, a constant-speed lead is solved at a reference charge of 0.55. The lead is used only when it lies inside a cone of about 35 degrees of the radial axis and the flight time is at most 1.4 seconds. Otherwise the shot leaves radially and can miss. Release timing picks the geometry. Charge picks the power and the fuel cost `0.10 + 0.28*c^2`.
+```text
+u(t) = 1 - exp(-t / tau)
+damage(t) = damageMax * u(t)
+```
+
+`u(0) = 0`, damage rises toward 6 and never reaches it, a 2 s hold outdamages a 0.5 s hold, and the gain from 1 s to 2 s is smaller than the gain from 0 s to 1 s. The HUD charge is that same `u(t)`, not a separate integrator. Muzzle speed is `0.40 + 3.60*u`. Projectile radius is `0.022 * (0.5 + u)`. The shot's velocity is the ship's velocity plus that speed along the aim direction. Firing spends fuel `0.10 + 0.28*u`.
+
+Aim is a radial cone, not a homing missile. While SPACE is held, the lead is solved at the current `u`. It is used only when it lies inside a cone of about 35 degrees of the radial axis and the flight time is at most 1.4 seconds. Otherwise the shot leaves radially and can miss. Release timing picks the geometry. Hold duration picks the power.
 
 ## Enemies
 
@@ -63,4 +70,4 @@ Gravity is `a = -mu * r / |r|^3` with `mu = 0.40`. The ship starts in a circular
 
 ## Difficulty
 
-Fuel makes a permanent hold lose the orbit and the gun, because a shot is fired on release and thrust dies on an empty tank. A tap shorter than 0.12 seconds does not fire. On seeds 1 through 8, a 32-second level-1 sample gave the heuristic 11078 points and 4 clears, a fixed rhythm 5333 points and 2 clears, random firing 2445 points and 1 clear, and both rapid tapping and permanent hold 0 points.
+Fuel makes a permanent hold lose the orbit, because thrust dies on an empty tank and a shot is fired only on release. There is no minimum hold and no anti-spam cooldown. The response is concave, so several short holds can add more damage than one hold of the same total time if every shot hits. A 0.5 s shot deals about 2.36 damage and a 2 s shot about 5.19, while four separate 0.5 s shots add about 9.44. Each shot still has to intercept, and each spends fuel. On seed 7 for 32 seconds, rapid 0.08 s taps fired 192 shots and hit none. A permanent hold fired none. A lock-gated heuristic scored 2140 with 2 hits out of 2 shots. A fixed 0.6 s rhythm scored 3085, and random holds scored 4963. Repeated medium holds can outscore one careful long hold when they connect.
