@@ -107,6 +107,24 @@ verifyEqual(tc, S.shotsFired, 0);
 verifyEqual(tc, S.thrust, 0);
 end
 
+function testRepeatedDownIsOneShot(tc)
+C = orConst();
+S = playing();
+S.hp = 1e6;
+n = round(2.0 / C.dt);
+for i = 1:n
+    S = orStep(S, true, false);
+    verifyEqual(tc, S.presses, 1);
+    verifyEqual(tc, S.shotsFired, 0);
+end
+S = orStep(S, false, false);
+t = n * C.dt;
+verifyEqual(tc, S.shotsFired, 1);
+verifyEqual(tc, S.releases, 1);
+verifyEqual(tc, S.P(1, 6), C.damageMax * (1 - exp(-t / C.tau)), 'AbsTol', 1e-9);
+verifyGreaterThan(tc, S.P(1, 6), C.damageMax * (1 - exp(-0.5 / C.tau)));
+end
+
 function testDeviceRepeatSuppression(tc)
 ud = orInputDevice(0);
 ud = orInputDevice(1, ud, 1);

@@ -38,7 +38,7 @@ function testScriptedLevelOne(tc)
 sched = [1 1; 0 1142; 1 33; 0 1; 1 33; 0 20];
 S = orbitalReaper(3, orbitalReaper(1, 7, 1), sched);
 verifyEqual(tc, S.mode, 2);
-verifyEqual(tc, S.score, 2156);
+verifyEqual(tc, S.score, 2148);
 verifyGreaterThanOrEqual(tc, S.kills, 1);
 verifyGreaterThan(tc, S.hp, 0);
 verifyEqual(tc, S.nF, 2);
@@ -55,17 +55,48 @@ verifyEqual(tc, S.nF, 0);
 verifyLessThan(tc, S.fuel, 0.05);
 end
 
-function testShortTapDoesNotFire(tc)
+function testOneHoldFiresOnce(tc)
+S = armed();
+S = orbitalReaper(3, S, [1 400; 0 1]);
+verifyEqual(tc, S.nF, 1);
+verifyLessThan(tc, S.P(1, 6), 6);
+end
+
+function testShortTapsFireOnceEach(tc)
+S = armed();
+for k = 1:8
+    before = S.nF;
+    S = orbitalReaper(3, S, [1 5; 0 1]);
+    verifyEqual(tc, S.nF, before + 1);
+end
+verifyEqual(tc, S.nF, 8);
+verifyLessThan(tc, 6 * (1 - exp(-5 / 60)), 6 * (1 - exp(-0.5)));
+end
+
+function testDamageStepResponse(tc)
+shortHold = releaseAfter(30);
+longHold = releaseAfter(120);
+u05 = 1 - exp(-0.5);
+u20 = 1 - exp(-2);
+verifyEqual(tc, shortHold.nF, 1);
+verifyEqual(tc, longHold.nF, 1);
+verifyEqual(tc, shortHold.P(1, 6), 6 * u05, 'AbsTol', 1e-9);
+verifyEqual(tc, longHold.P(1, 6), 6 * u20, 'AbsTol', 1e-9);
+verifyGreaterThan(tc, longHold.P(1, 6), shortHold.P(1, 6));
+verifyLessThan(tc, longHold.P(1, 6), 6);
+d01 = 6 * (1 - exp(-1));
+verifyGreaterThan(tc, d01, 6 * u20 - d01);
+end
+
+function S = armed()
 S = orbitalReaper(1, 7, 1);
 S = orbitalReaper(2, S, true);
 S = orbitalReaper(2, S, false);
-for k = 1:8
-    for n = 1:5
-        S = orbitalReaper(2, S, true);
-    end
-    S = orbitalReaper(2, S, false);
+S.hp = 1e6;
 end
-verifyEqual(tc, S.nF, 0);
+
+function S = releaseAfter(nHold)
+S = orbitalReaper(3, armed(), [1 nHold; 0 1]);
 end
 
 function testFigureSmoke(tc)

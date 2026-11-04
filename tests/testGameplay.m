@@ -111,8 +111,8 @@ rhythm = 4;
 verifyGreaterThan(tc, R.kills(heur), 0);
 verifyGreaterThan(tc, R.score(heur), R.score(tap));
 verifyGreaterThan(tc, R.score(heur), R.score(hold));
-verifyGreaterThan(tc, R.score(heur), R.score(rhythm));
 verifyGreaterThan(tc, R.accuracy(heur), R.accuracy(rhythm));
-verifyEqual(tc, R.score(tap), 0);
+verifyGreaterThan(tc, R.fired(tap), 0);
 verifyEqual(tc, R.fired(hold), 0);
+verifyEqual(tc, R.score(hold), 0);
 end

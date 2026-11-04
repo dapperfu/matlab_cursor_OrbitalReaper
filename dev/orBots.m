@@ -1,7 +1,8 @@
 function R = orBots(seed, seconds, levels)
 %ORBOTS Compare scripted policies on the same worlds.
 %   The heuristic uses fuel, charge, and lock. It has no extra button
-%   and no spam penalty beyond the fuel and damage model.
+%   and no spam penalty. It releases at u = 0.55, about 0.8 s. Damage
+%   keeps rising after that, so the cutoff is not a damage peak.
 
 if nargin < 1 || isempty(seed)
     seed = 7;

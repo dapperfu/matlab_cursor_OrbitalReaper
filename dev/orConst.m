@@ -5,6 +5,9 @@ function C = orConst()
 %   raises apoapsis while shifting phase, so kTan stays 0. thrustA is low
 %   enough that this burn remains inside the arena. A near-empty tank
 %   (about 2.2 s) goes hyperbolic and hits the boundary.
+%   One release shot deals damageMax * (1 - exp(-hold / tau)) with
+%   tau = 1.0 s. The same u sets muzzle speed, projectile radius, and
+%   the fuel the shot spends. Holding does not fire again.
 
 C.mu = 0.40;
 C.r0 = 1.60;
@@ -15,8 +18,8 @@ C.thrustA = 0.25;
 C.kTan = 0.0;
 C.fuelBurn = 0.40;
 C.fuelRegen = 0.16;
-C.chargeTime = 1.0;
-C.minHold = 0.12;
+C.tau = 1.0;
+C.damageMax = 6;
 C.shipR = 0.07;
 C.shotR = 0.022;
 C.muzzle0 = 0.40;

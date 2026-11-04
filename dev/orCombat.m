@@ -1,10 +1,10 @@
 function S = orCombat(S, action)
 %ORCOMBAT Aim update or a single release shot.
 %   'aim'  refreshes the lead solution from current geometry.
-%   'fire' spawns one projectile from the current charge and aim.
+%   'fire' spawns one projectile from the hold-time response and aim.
 %   A hold never calls 'fire'. Release instant picks the direction.
-%   Charge picks power. Outside the cone the shot leaves along the nose,
-%   so a bad release misses.
+%   Hold duration picks power. Outside the cone the shot leaves along
+%   the nose, so a bad release misses.
 
 if strcmp(action, 'aim')
     S = aimAt(S);
@@ -21,7 +21,7 @@ C = orConst();
 r = max(hypot(S.px, S.py), 1e-8);
 rhx = S.px / r;
 rhy = S.py / r;
-c = 0.55;
+c = min(1, max(0, S.charge));
 muzzle = C.muzzle0 + C.muzzle1 * c;
 best = -inf;
 bestAlign = 0;
@@ -118,26 +118,22 @@ end
 
 function S = fireShot(S)
 C = orConst();
-if S.holdDt < C.minHold || S.charge <= 0
-    S.charge = 0;
-    return
-end
-c = min(1, S.charge);
-dmg = 3.2 * (0.50 * c + 1.85 * c * (1 - c));
-spd = C.muzzle0 + C.muzzle1 * c;
+u = 1 - exp(-max(0, S.holdDt) / C.tau);
+dmg = C.damageMax * u;
+spd = C.muzzle0 + C.muzzle1 * u;
 vx = S.vx + spd * S.aimx;
 vy = S.vy + spd * S.aimy;
 spawned = false;
 for i = 1:C.maxP
     if S.P(i, 1) <= 0
-        S.P(i, :) = [1, S.px, S.py, vx, vy, dmg, 0, C.shotR];
+        S.P(i, :) = [1, S.px, S.py, vx, vy, dmg, 0, C.shotR * (0.5 + u)];
         spawned = true;
         break
     end
 end
 if spawned
     S.shotsFired = S.shotsFired + 1;
-    S.fuel = max(0, S.fuel - (0.10 + 0.28 * c * c));
+    S.fuel = max(0, S.fuel - (0.10 + 0.28 * u));
 end
 S.charge = 0;
 end

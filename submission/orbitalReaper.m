@@ -60,7 +60,7 @@ S.hd=S.t-S.t0;
 else
 S.hd=0;
 end
-if S.phase==1&&S.fuel>0,S.charge=min(1,S.charge+C.dt/C.ct);end
+if S.phase==1||ev,S.charge=1-exp(-S.hd/C.tau);end
 S=phys(S,C);S=aim(S,C);S=foes(S,C);S=hit(S,C);if ev,S=fire(S,C);end
 if S.hp<=0
 S.hp=0;S.mode=3;S.phase=0;S.charge=0;
@@ -102,7 +102,7 @@ if ~S.(f),S.hp=S.hp-dmg;S.(f)=1;end
 elseif abs(r-lim)>.12,S.(f)=0;end
 end
 function S=aim(S,C)
-r=max(hypot(S.px,S.y),1e-8);rh=[S.px S.y]/r;m=C.m0+C.m1*.55;best=-inf;ba=0;bt=inf;bs=1;b=rh;fd=0;
+r=max(hypot(S.px,S.y),1e-8);rh=[S.px S.y]/r;m=C.m0+C.m1*S.charge;best=-inf;ba=0;bt=inf;bs=1;b=rh;fd=0;
 for i=1:C.nE
 if S.E(i,1)<=0,continue;end
 R=S.E(i,3:4)-[S.px S.y];W=S.E(i,5:6)-[S.vx S.vy];t=lead(W*W'-m*m,2*(R*W'),R*R');
@@ -122,11 +122,10 @@ d=b*b-4*a*c;if d<0,return;end
 u=[(-b-sqrt(d))/(2*a) (-b+sqrt(d))/(2*a)];u=u(u>.02);if ~isempty(u),t=min(u);end
 end
 function S=fire(S,C)
-if S.hd<C.mh||S.charge<=0,S.charge=0;return;end
-c=min(1,S.charge);dmg=3.2*(.50*c+1.85*c*(1-c));spd=C.m0+C.m1*c;vx=S.vx+spd*S.aimx;vy=S.vy+spd*S.aimy;spawned=false;for i=1:C.nP
-if S.P(i,1)<=0,S.P(i,:)=[1 S.px S.y vx vy dmg 0 C.qr];spawned=true;break;end
+u=S.charge;dmg=C.dm*u;spd=C.m0+C.m1*u;vx=S.vx+spd*S.aimx;vy=S.vy+spd*S.aimy;spawned=false;for i=1:C.nP
+if S.P(i,1)<=0,S.P(i,:)=[1 S.px S.y vx vy dmg 0 C.qr*(.5+u)];spawned=true;break;end
 end
-if spawned,S.nF=S.nF+1;S.fuel=max(0,S.fuel-(.10+.28*c*c));end
+if spawned,S.nF=S.nF+1;S.fuel=max(0,S.fuel-(.10+.28*u));end
 S.charge=0;
 end
 function S=foes(S,C)
@@ -162,7 +161,7 @@ for i=1:C.nP
 if S.P(i,1)<=0,continue;end
 o=S.P(i,2:3);n=o+S.P(i,4:5)*dt;S.P(i,2:3)=n;S.P(i,7)=S.P(i,7)+dt;dmg=S.P(i,6);struck=false;
 for e=1:C.nE
-if S.E(e,1)>0&&sweep(o(1),o(2),n(1),n(2),S.E(e,3),S.E(e,4),C.qr+C.er(S.E(e,2)))
+if S.E(e,1)>0&&sweep(o(1),o(2),n(1),n(2),S.E(e,3),S.E(e,4),S.P(i,8)+C.er(S.E(e,2)))
 S.E(e,7)=S.E(e,7)-dmg;killed=S.E(e,7)<=0;if killed,S.E(e,1)=0;S.E(e,11)=0;end
 S=award(S,dmg,killed);S.P(i,1)=0;struck=true;hitThis=true;break
 end
@@ -234,5 +233,5 @@ function [u,s]=lcg(s,n)
 u=zeros(1,n);for k=1:n,s=mod(1664525*s+1013904223,2^32);u(k)=s/2^32;end
 end
 function C=K()
-C.mu=.40;C.r0=1.60;C.rp=.40;C.ra=3.20;C.dt=1/60;C.ta=.25;C.fb=.40;C.fr=.16;C.ct=1;C.mh=.12;C.sr=.07;C.qr=.022;C.m0=.40;C.m1=3.60;C.cone=.82;C.tf=1.40;C.nE=8;C.nP=16;C.nQ=16;C.hp0=100;C.pl=2.4;C.ql=4.5;C.tg=.70;C.er=[.055 .08 .14];C.eh=[4.2 8.5 14];
+C.mu=.40;C.r0=1.60;C.rp=.40;C.ra=3.20;C.dt=1/60;C.ta=.25;C.fb=.40;C.fr=.16;C.tau=1;C.dm=6;C.sr=.07;C.qr=.022;C.m0=.40;C.m1=3.60;C.cone=.82;C.tf=1.40;C.nE=8;C.nP=16;C.nQ=16;C.hp0=100;C.pl=2.4;C.ql=4.5;C.tg=.70;C.er=[.055 .08 .14];C.eh=[4.2 8.5 14];
 end

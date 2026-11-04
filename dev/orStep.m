@@ -50,8 +50,8 @@ else
     S.holdDt = 0;
     S.coastDt = S.t - S.releaseTime;
 end
-if S.phase == 1 && S.fuel > 0
-    S.charge = min(1, S.charge + C.dt / C.chargeTime);
+if S.phase == 1 || evRel
+    S.charge = 1 - exp(-max(0, S.holdDt) / C.tau);
 end
 S = orPhysics(S);
 S = orCombat(S, 'aim');

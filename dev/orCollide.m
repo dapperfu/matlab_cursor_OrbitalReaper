@@ -26,7 +26,7 @@ for i = 1:C.maxP
             continue
         end
         cls = S.E(e, 2);
-        rad = C.shotR + C.enemyR(cls);
+        rad = S.P(i, 8) + C.enemyR(cls);
         if swept(ox, oy, nx, ny, S.E(e, 3), S.E(e, 4), rad)
             S.E(e, 7) = S.E(e, 7) - dmg;
             killed = S.E(e, 7) <= 0;
